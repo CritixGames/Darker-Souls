@@ -1,0 +1,240 @@
+# Cristian Gasparesc 1912149
+# Dawson College 2021
+# Comprehensive Examination Project: Game Creation in Python (Simulation)
+# GameTitle: DarkerSouls, a reimagined arcade version of the popular game series known as Dark Souls
+
+import pygame  # Library of gaming components
+import random  # Library of random events components
+import math  # Math Library
+from pygame import mixer #Audio Library
+
+# Game Initialisation
+pygame.init()
+
+# Game_Window Intitialisation (Creating a game screen)
+Game_Window = pygame.display.set_mode((800, 600))  # Width vs Height of Game Screen
+clock = pygame.time.Clock()
+black = (0, 0, 0)
+
+# Background
+background = pygame.image.load("dungeon.png")  # Set Background Image for Game_Window
+background1 = pygame.image.load("background1.png")  # Set Background Image for Menu #new
+
+# Background Sound
+mixer.music.load("bgsong.wav")
+mixer.music.play(-1)
+
+# Title and Icon of Game_Window
+pygame.display.set_caption("Darker Souls")  # Set Title of Game_Window
+icon = pygame.image.load("logo.png")  # Set Icon(Image 32x32 png) of Game_Window
+pygame.display.set_icon(icon)  # Set Icon of Game_Window
+
+# Player
+Playerimg = pygame.image.load("player.png")  # Set Image/Icon of the player
+PlayerX = 370  # Set Location of image (player.png) on the x axis
+PlayerY = 480  # Set Location of image (player.png) on the y axis
+PlayerX_Change = 0  # Set player movement value on the x axis at this step to 0
+
+# Enemy Defined as lists(arrays) to include multiple enemies
+Enemyimg = []
+EnemyX = []
+EnemyY = []
+EnemyX_Change = []
+EnemyY_Change = []
+
+#Define How Many Enemies
+num_of_Enemies = 20
+
+for i in range(num_of_Enemies):
+    Enemyimg.append(pygame.image.load("enemy.png"))  # Set Image/Icon of the enemy
+    EnemyX.append(random.randint(0, 735))  # Set Location of image on the x axis RANDOMLY
+    EnemyY.append(random.randint(50, 200))  # Set Location of image on the y axis RANDOMLY
+    EnemyX_Change.append(0.2)  # Set enemy movement value on the x axis at this step to 0
+    EnemyY_Change.append(70)  # Set enemy movement value on the y axis at this step to 0
+
+# Sword Projectile
+Swordimg = pygame.image.load("sword.png")  # Set Image/Icon of the Sword
+SwordX = 0  # Set Location of image on the x axis
+SwordY = 480  # Set Location of image on the y axis at height of Player
+SwordX_Change = 0  # Set Sword movement value on the x axis at this step to 0
+SwordY_Change = 1  # Set Sword movement value on the y axis at this step to 0
+Sword_State = "ready"  # You cannot see the bullet in this state
+
+# Score Variable
+Score_Value = 0 #Score of enemies hit with sword
+font = pygame.font.Font('RINGM___.TTF',32)  #Set Font of Text on Game_Window
+
+TextX = 10
+TextY = 10
+
+# Game Over Text
+Over_font = pygame.font.Font('RINGM___.TTF',64)  #Set Font of Text on Game_Window
+
+#Show_Score Function
+def Show_Score(x,y):
+  Score = font.render("Score : " + str(Score_Value), True, (255, 255, 255))
+  Game_Window.blit(Score, (x, y))
+
+#Pause Game Function
+def Pause():
+    Pause = font.render("Tab to Pause", True, (255, 255, 255))
+    Game_Window.blit(Pause, (600, 10))
+
+#Exit Game Function
+def Exit():
+    Pause = font.render("esc to Exit", True, (255, 255, 255))
+    Game_Window.blit(Pause, (300, 10))
+
+#Defining the Game OVER text
+def Game_Over_Text():
+  Over_text = Over_font.render("YOU ARE DEAD", True, (255, 255, 255))
+  Game_Window.blit(Over_text, (200, 250))
+
+# Defining Player, using blit fonction to draw him on Game_Window
+def player(x, y):
+    Game_Window.blit(Playerimg, (x, y))
+
+
+# Defining Enemy, using blit fonction to draw him on Game_Window
+def enemy(x, y, i):
+    Game_Window.blit(Enemyimg[i], (x, y))
+
+
+# Defining The Projectile used by the Player, using blit fonction to draw him on Game_Window
+def fire_sword(x, y):
+    global Sword_State  # Set to global for the function to be able to read variable
+    Sword_State = "fire"
+    Game_Window.blit(Swordimg, (x + 16, y + 10))  # Adjusting so it starts in the middle of player icon
+
+
+# Defining Collisions between Enemy and Sword
+def isCollision(EnemyX, EnemyY, SwordX, SwordY):
+    distance = math.sqrt((math.pow(EnemyX - SwordX, 2)) + (math.pow(EnemyY - SwordY, 2)))
+    if distance < 27:
+        return True
+    else:
+        return False
+
+
+# Game Loop
+
+menu = True #Menu is ON
+
+running = True #Game_Window is Running
+while running:
+    # Menu Configuration
+    while menu:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    menu = False
+
+        Game_Window.fill((0, 0, 0))
+        clock.tick(30)
+        Game_Window.blit(background1, (0, 0))
+
+        pygame.display.update()
+
+
+
+
+    # Setting Background Color of Game_Window, At top of loop to not overlap with images
+    Game_Window.fill((0, 0, 0))  # RGB (RED,GREEN,BLUE)
+    # Background image
+    Game_Window.blit(background, (0, 0))  # Draw Background
+    for event in pygame.event.get():  # Close Window Event
+        if event.type == pygame.QUIT:  # Close Window for Game_Window
+            running = False  # Stop Execution
+
+        # Keyboard configuration
+        if event.type == pygame.KEYDOWN:  # Key is pressed
+            if event.key == pygame.K_LEFT:  # Left Arrow key is pressed
+                PlayerX_Change = -0.3  # Add Value to the X axis to the left
+            if event.key == pygame.K_RIGHT:  # Right Arrow key is pressed
+                PlayerX_Change = 0.3  # Add Value to the X axis to the right
+            if event.key == pygame.K_SPACE:
+                if Sword_State == "ready":  # Blocks Player from throwing another sword until first one reaches 0 on the y axis
+                    Sword_Sound = mixer.Sound("throw.wav")
+                    Sword_Sound.play()
+                    SwordX = PlayerX
+                    fire_sword(SwordX, SwordY)  # Add Value to the X&Y axis to the right
+
+        if event.type == pygame.KEYUP:  # Key is released
+            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                PlayerX_Change = 0  # return value back to 0 to stop movement on x axis
+
+    PlayerX += PlayerX_Change  # Player Location Change on the X Axis
+
+    # Game_Window Boundries for Player
+    if PlayerX <= 15:
+        PlayerX = 15  # Player Icon reaches 0 on the X axis and it will stop at 15
+    elif PlayerX >= 736:
+        PlayerX = 736  # Player Icon reaches 736 on the X axis and it will stop at 736
+
+    # Enemy Initialisation
+    for i in range(num_of_Enemies):
+        EnemyX[i] += EnemyX_Change[i]  # Enemy Location Change on the X Axis
+
+        # Game Over
+        if EnemyY[i] > 425:
+          for j in range(num_of_Enemies):
+            EnemyY[j] = 2000
+          Game_Over_Text()
+          break
+
+        # Game_Window Boundries for Enemy and Enemy Movement
+        if EnemyX[i] <= 0:
+            EnemyX_Change[i] = 0.2  # Enemy Icon reaches 0 on the X axis and it will stop at 0
+            EnemyY[i] += EnemyY_Change[i]
+        elif EnemyX[i] >= 736:
+            EnemyX_Change[i] = -0.2  # Enemy Icon reaches 736 on the X axis and it will stop at 736
+            EnemyY[i] += EnemyY_Change[i]
+
+        # Collision
+        collision = isCollision(EnemyX[i], EnemyY[i], SwordX, SwordY)
+        if collision:
+            Death_Sound = mixer.Sound("ghost.wav")
+            Death_Sound.play()
+            SwordY = 480  # Reset position of sword after collision
+            Sword_State = "ready"  # Reset State of sword after collision
+            Score_Value += 1
+            EnemyX[i] = random.randint(0, 735)  # Reset location of enemy on the X position
+            EnemyY[i] = random.randint(50, 250)  # Reset location of enemy on the Y position
+
+        enemy(EnemyX[i], EnemyY[i], i)  # Enemy Icon Location
+
+    # Projectile Movement
+    if SwordY <= 0:  # When Projectile hits the top border
+        SwordY = 480  # Reset position to 480 (on player)
+        Sword_State = "ready"  # Reset to non-visible state
+
+    if Sword_State == "fire":
+        fire_sword(SwordX, SwordY)
+        SwordY -= SwordY_Change  # Subsctract continuously values on y axis
+
+    #Pause Function When ESCAPE is pressed Game Pauses
+    elif event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_TAB:
+            menu = True
+
+    #Exit Game Button (Key)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                    running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE:
+                running = True
+
+
+
+    player(PlayerX, PlayerY)  # Player Icon Location
+    Show_Score(TextX, TextY)  # Score Overlay
+    Pause() # Show Pause Game Text
+    Exit() # Show Exit Text
+    pygame.display.update()  # Display Changes
+
